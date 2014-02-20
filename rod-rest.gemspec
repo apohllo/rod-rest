@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency("sinatra")
   s.add_dependency("rod")
+  s.add_dependency("faraday")
 
   s.add_development_dependency("rack-test")
   s.add_development_dependency("rspec")

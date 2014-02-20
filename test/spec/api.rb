@@ -13,7 +13,7 @@ module Rod
       end
 
       def json_body
-        JSON.parse(last_response.body)
+        JSON.parse(last_response.body,symbolize_names: true)
       end
 
       # We need different resource name for each test due to Sinatra.
@@ -35,7 +35,7 @@ module Rod
         it "returns count of cars" do
           get "/#{resource_name}"
           last_response.status.should == 200
-          json_body.should == {"count" => count}
+          json_body.should == {count: count}
         end
 
         it "returns 404 for non-existing car" do
@@ -64,7 +64,7 @@ module Rod
         it "returns cars matching given indexed property" do
           get "/#{resource_name}?#{property_name}=#{property_value}"
           last_response.status.should == 200
-          json_body.should == [{"rod_id" => car_id1, "type" => "Car"}, {"rod_id" => car_id2, "type" => "Car"} ]
+          json_body.should == [{rod_id: car_id1, type: "Car"}, {rod_id: car_id2, type: "Car"} ]
         end
 
         it "returns an empty array if there are no matching objects" do
@@ -93,7 +93,7 @@ module Rod
         it "returns JSON description of the car" do
           get "/#{resource_name}/#{car_id1}"
           last_response.status.should == 200
-          json_body.should == { "rod_id" => car_id1, "type" => "Car" }
+          json_body.should == { rod_id: car_id1, type: "Car" }
         end
 
         it "returns 404 for non-existing car" do
@@ -119,7 +119,7 @@ module Rod
         it "returns number of the drivers" do
           get "/#{resource_name}/#{car_id1}/#{relation_name}"
           last_response.status.should == 200
-          json_body.should == { "count" => drivers_count }
+          json_body.should == { count: drivers_count }
         end
 
         it "returns 404 for non-existing car" do
@@ -158,7 +158,7 @@ module Rod
         it "returns JSON representation of the driver" do
           get "/#{resource_name}/#{car_id1}/#{relation_name}/#{driver_index}"
           last_response.status.should == 200
-          json_body.should == { "rod_id" => driver_id, "type" => "Driver" }
+          json_body.should == { rod_id: driver_id, type: "Driver" }
         end
 
         it "returns 404 for non-existing car" do

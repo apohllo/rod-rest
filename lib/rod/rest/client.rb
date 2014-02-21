@@ -5,6 +5,7 @@ require 'cgi'
 module Rod
   module Rest
     class MissingResource < RuntimeError; end
+    class APIError < RuntimeError; end
 
     class Client
       # Options:

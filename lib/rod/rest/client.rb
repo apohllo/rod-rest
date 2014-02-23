@@ -2,11 +2,10 @@ require 'json'
 require 'active_model/naming'
 require 'cgi'
 
+require 'rod/rest/exception'
+
 module Rod
   module Rest
-    class MissingResource < RuntimeError; end
-    class APIError < RuntimeError; end
-
     class Client
       # Options:
       # * http_client - library used to talk via HTTP (e.g. Faraday)

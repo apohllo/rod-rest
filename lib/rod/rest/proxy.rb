@@ -1,7 +1,7 @@
+require 'rod/rest/exception'
+
 module Rod
   module Rest
-    class InvalidData < RuntimeError; end
-
     class Proxy
       # Initialize new Proxy factory based on the +metadata+ and associated with
       # the +client+, used to fetch the descriptions of the objects.

@@ -10,6 +10,7 @@ module Rod
     describe Client do
       let(:client)        { Client.new(http_client: web_client,metadata: metadata, factory: factory) }
       let(:resource_name) { "Car" }
+      let(:car_type)      { resource_name }
       let(:metadata)      { stub!.resources { [resource1] }.subject }
       let(:resource1)     { resource = stub!.name { resource_name }.subject
                             stub(resource).indexed_properties { indexed_properties }
@@ -39,8 +40,8 @@ module Rod
 
       describe "with two cars defined" do
         let(:mercedes_300_id)   { 1 }
-        let(:mercedes_300_hash) { {id: mercedes_300_id, type: "Car" } }
-        let(:mercedes_180_hash) { {id: 2, type: "Car" } }
+        let(:mercedes_300_hash) { {rod_id: mercedes_300_id, type: car_type } }
+        let(:mercedes_180_hash) { {rod_id: 2, type: car_type } }
         let(:mercedes_300_proxy){ Object.new }
         let(:mercedes_180_proxy){ Object.new }
         let(:factory)           { factory = stub!.build(mercedes_300_hash) { mercedes_300_proxy }.subject
@@ -70,7 +71,7 @@ module Rod
           end
         end
 
-        describe "#find_car(id)" do
+        describe "with car response defined" do
           let(:web_client)        { web_client = stub!.get("/cars/#{mercedes_300_id}") { response }.subject
                                     stub(web_client).get("/cars/#{invalid_id}") { invalid_response }
                                     web_client
@@ -81,21 +82,43 @@ module Rod
             stub(response).body { json_mercedes_300 }
           end
 
-          it "finds the car by its id" do
-            client.find_car(mercedes_300_id).should == mercedes_300_proxy
+          describe "#find_car(rod_id)" do
+            it "finds the car by its rod_id" do
+              client.find_car(mercedes_300_id).should == mercedes_300_proxy
+            end
+
+            it "raises MissingResource exception for invalid car rod_id" do
+              lambda { client.find_car(invalid_id)}.should raise_exception(MissingResource)
+            end
           end
 
-          it "raises MissingResource exception for invalid car id" do
-            lambda { client.find_car(invalid_id)}.should raise_exception(MissingResource)
+          describe "#fetch_object(car_stub)" do
+            let(:car_stub)        { { rod_id: mercedes_300_id, type: car_type } }
+            let(:invalid_id_stub) { { rod_id: invalid_id, type: car_type } }
+            let(:invalid_type_stub) { { rod_id: mercedes_300_id, type: invalid_type } }
+            let(:invalid_type)    { "InvalidType" }
+
+            it "finds the car by its stub" do
+              client.fetch_object(car_stub).should == mercedes_300_proxy
+            end
+
+            it "raises MissingResource execption for invalid car rod_id" do
+              lambda { client.fetch_object(invalid_id_stub)}.should raise_exception(MissingResource)
+            end
+
+            it "raises APIError execption for invalid type" do
+              lambda { client.fetch_object(invalid_type_stub)}.should raise_exception(APIError)
+            end
           end
         end
+
 
         describe "with associations" do
           let(:plural_associations) { [plural_association] }
           let(:plural_association)  { stub!.name { association_name}.subject }
           let(:association_name)    { "drivers" }
 
-          describe "#car_drivers_count(id)" do
+          describe "#car_drivers_count(rod_id)" do
             let(:web_client)        { web_client = stub!.get("/cars/#{mercedes_300_id}/#{association_name}") { response }.subject
                                       stub(web_client).get("/cars/#{invalid_id}/#{association_name}") { invalid_response }
                                       web_client
@@ -112,19 +135,19 @@ module Rod
               client.car_drivers_count(mercedes_300_id).should == drivers_count
             end
 
-            it "raises MissingResource exception for invalid car id" do
+            it "raises MissingResource exception for invalid car rod_id" do
               lambda { client.car_drivers_count(invalid_id)}.should raise_exception(MissingResource)
             end
           end
 
-          describe "#car_driver(id,index)" do
+          describe "#car_driver(rod_id,index)" do
             let(:web_client)        { web_client = stub!.get("/cars/#{mercedes_300_id}/#{association_name}/#{schumaher_index}") { response }.subject
                                       stub(web_client).get("/cars/#{invalid_id}/#{association_name}/#{schumaher_index}") { invalid_response }
                                       stub(web_client).get("/cars/#{mercedes_300_id}/#{association_name}/#{invalid_index}") { invalid_response }
                                       web_client
             }
             let(:schumaher_index)   { 0 }
-            let(:schumaher_hash)    { { id: schumaher_id, name: "Schumaher", type: "Driver" } }
+            let(:schumaher_hash)    { { rod_id: schumaher_id, name: "Schumaher", type: "Driver" } }
             let(:schumaher_json)    { schumaher_hash.to_json }
             let(:schumaher_proxy)   { Object.new }
             let(:schumaher_id)      { 1 }
@@ -138,7 +161,7 @@ module Rod
               client.car_driver(mercedes_300_id,schumaher_index).should == schumaher_proxy
             end
 
-            it "raises MissingResource exception for invalid car id" do
+            it "raises MissingResource exception for invalid car rod_id" do
               lambda { client.car_driver(invalid_id,schumaher_index)}.should raise_exception(MissingResource)
             end
 

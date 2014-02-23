@@ -26,6 +26,15 @@ module Rod
         define_relations(metadata)
       end
 
+      # Fetch the object from the remote API. The method requires the stub of
+      # the object to be proviede, i.e. a hash containing its +rod_id+ and
+      # +type+, e.g. {rod_id: 1, type: "Car"}.
+      def fetch_object(object_stub)
+        check_stub(object_stub)
+        check_method(object_stub)
+        __send__(primary_finder_method_name(object_stub[:type]),object_stub[:rod_id])
+      end
+
       private
       def define_counters(metadata)
         metadata.resources.each do |resource|
@@ -80,6 +89,18 @@ module Rod
         end
       end
 
+      def check_stub(object_stub)
+        unless object_stub.has_key?(:rod_id) && object_stub.has_key?(:type)
+          raise APIError.new(invalid_stub_error(object_stub))
+        end
+      end
+
+      def check_method(object_stub)
+        unless self.respond_to?(primary_finder_method_name(object_stub[:type]))
+          raise APIError.new(invalid_method_error(primary_finder_method_name(object_stub[:type])))
+        end
+      end
+
       def resource_path(resource)
         "/#{plural_resource_name(resource)}"
       end
@@ -105,7 +126,12 @@ module Rod
       end
 
       def singular_resource_name(resource)
-        resource.name.gsub("::","_").downcase
+        if resource.respond_to?(:name)
+          name = resource.name
+        else
+          name = resource
+        end
+        name.gsub("::","_").downcase
       end
 
       def primary_finder_method_name(resource)
@@ -126,6 +152,14 @@ module Rod
 
       def finder_query(property,value)
         "?#{@cgi.escape(property.name)}=#{@cgi.escape(value)}"
+      end
+
+      def invalid_stub_error(object_stub)
+        "The object stub is invalid: #{object_stub}"
+      end
+
+      def invalid_method_error(plural_name)
+        "The API doesn't have the method '#{plural_name}'"
       end
     end
   end

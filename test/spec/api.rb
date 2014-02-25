@@ -1,7 +1,6 @@
 require 'bundler/setup'
 require_relative 'test_helper'
 require 'rod/rest/api'
-require 'json'
 
 module Rod
   module Rest

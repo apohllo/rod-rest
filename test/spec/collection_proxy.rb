@@ -5,9 +5,9 @@ require 'rod/rest/collection_proxy'
 module Rod
   module Rest
     describe CollectionProxy do
-      let(:collection)        { CollectionProxy.new(proxy: mercedes_proxy, relation: relation,client: client,size: size) }
+      let(:collection)        { CollectionProxy.new(proxy: mercedes_proxy, association_name: association_name,client: client,size: size) }
       let(:mercedes_proxy)    { Object.new }
-      let(:relation)          { :drivers }
+      let(:association_name)  { "drivers" }
       let(:size)              { 0 }
       let(:client)            { Object.new }
 
@@ -49,8 +49,8 @@ module Rod
 
           describe "#[index]" do
             before do
-              stub(client).fetch_related_object(mercedes_proxy,relation,1) { kubica }
-              stub(client).fetch_related_object(mercedes_proxy,relation,5) { raise MissingResource.new("/cars/#{mercedes_300_id}/drivers/5") }
+              stub(client).fetch_related_object(mercedes_proxy,association_name,1) { kubica }
+              stub(client).fetch_related_object(mercedes_proxy,association_name,5) { raise MissingResource.new("/cars/#{mercedes_300_id}/drivers/5") }
             end
 
             it "returns drivers by index" do
@@ -64,7 +64,7 @@ module Rod
 
           describe "#first" do
             before do
-              stub(client).fetch_related_object(mercedes_proxy,relation,0) { schumaher }
+              stub(client).fetch_related_object(mercedes_proxy,association_name,0) { schumaher }
             end
 
             it "returns the first driver" do
@@ -74,7 +74,7 @@ module Rod
 
           describe "#last" do
             before do
-              stub(client).fetch_related_object(mercedes_proxy,relation,2) { alonzo }
+              stub(client).fetch_related_object(mercedes_proxy,association_name,2) { alonzo }
             end
 
             it "returns the last driver" do
@@ -84,9 +84,9 @@ module Rod
 
           describe "#each" do
             before do
-              stub(client).fetch_related_object(mercedes_proxy,relation,0) { schumaher }
-              stub(client).fetch_related_object(mercedes_proxy,relation,1) { kubica }
-              stub(client).fetch_related_object(mercedes_proxy,relation,2) { alonzo }
+              stub(client).fetch_related_object(mercedes_proxy,association_name,0) { schumaher }
+              stub(client).fetch_related_object(mercedes_proxy,association_name,1) { kubica }
+              stub(client).fetch_related_object(mercedes_proxy,association_name,2) { alonzo }
             end
 
             it "iterates over the drivers" do

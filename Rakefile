@@ -5,5 +5,6 @@ namespace :test do
     sh "rspec test/spec/client.rb"
     sh "rspec test/spec/proxy.rb"
     sh "rspec test/spec/collection_proxy.rb"
+    sh "rspec test/spec/json_serializer.rb"
   end
 end

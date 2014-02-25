@@ -2,6 +2,7 @@ require 'bundler/setup'
 require_relative 'test_helper'
 require 'rod/rest/client'
 require 'json'
+require 'cgi'
 
 stub_class 'Rod::Rest::ProxyFactory'
 
@@ -112,7 +113,6 @@ module Rod
           end
         end
 
-
         describe "with associations" do
           let(:plural_associations) { [plural_association] }
           let(:plural_association)  { stub!.name { association_name}.subject }
@@ -140,7 +140,7 @@ module Rod
             end
           end
 
-          describe "#car_driver(rod_id,index)" do
+          describe "with reponse defined" do
             let(:web_client)        { web_client = stub!.get("/cars/#{mercedes_300_id}/#{association_name}/#{schumaher_index}") { response }.subject
                                       stub(web_client).get("/cars/#{invalid_id}/#{association_name}/#{schumaher_index}") { invalid_response }
                                       stub(web_client).get("/cars/#{mercedes_300_id}/#{association_name}/#{invalid_index}") { invalid_response }
@@ -157,16 +157,57 @@ module Rod
               stub(factory).build(schumaher_hash) { schumaher_proxy }
             end
 
-            it "returns the driver" do
-              client.car_driver(mercedes_300_id,schumaher_index).should == schumaher_proxy
+            describe "#car_driver(rod_id,index)" do
+              it "returns the driver" do
+                client.car_driver(mercedes_300_id,schumaher_index).should == schumaher_proxy
+              end
+
+              it "raises MissingResource exception for invalid car rod_id" do
+                lambda { client.car_driver(invalid_id,schumaher_index)}.should raise_exception(MissingResource)
+              end
+
+              it "raises MissingResource exception for invalid index" do
+                lambda { client.car_driver(mercedes_300_id,invalid_index)}.should raise_exception(MissingResource)
+              end
             end
 
-            it "raises MissingResource exception for invalid car rod_id" do
-              lambda { client.car_driver(invalid_id,schumaher_index)}.should raise_exception(MissingResource)
-            end
+            describe "#fetch_related_object(subject,relation,index)" do
+              let(:association_name)        { "drivers" }
+              let(:invalid_association_name){ "owners" }
+              let(:invalid_type)            { "InvalidType" }
+              let(:proxy_with_invalid_id)   { proxy = stub!.rod_id { invalid_id }.subject
+                                              stub(proxy).type { car_type }
+                                              proxy
+              }
+              let(:proxy_with_invalid_type) { proxy = stub!.rod_id { mercedes_300_id }.subject
+                                              stub(proxy).type { invalid_type }
+                                              proxy
+              }
 
-            it "raises MissingResource exception for invalid index" do
-              lambda { client.car_driver(mercedes_300_id,invalid_index)}.should raise_exception(MissingResource)
+              before do
+                stub(mercedes_300_proxy).rod_id { mercedes_300_id }
+                stub(mercedes_300_proxy).type { car_type }
+              end
+
+              it "returns the driver" do
+                client.fetch_related_object(mercedes_300_proxy,association_name,schumaher_index).should == schumaher_proxy
+              end
+
+              it "raises MissingResource exception for invalid car proxy id" do
+                lambda { client.fetch_related_object(proxy_with_invalid_id,association_name,schumaher_index)}.should raise_exception(MissingResource)
+              end
+
+              it "raises MissingResource exception for invalid index" do
+                lambda { client.fetch_related_object(mercedes_300_proxy,association_name,invalid_index)}.should raise_exception(MissingResource)
+              end
+
+              it "raises APIError exception for invalid resource type" do
+                lambda { client.fetch_related_object(proxy_with_invalid_type,association_name,schumaher_index)}.should raise_exception(APIError)
+              end
+
+              it "raises APIError exception for invalid association name" do
+                lambda { client.fetch_related_object(mercedes_300_proxy,invalid_association_name,schumaher_index)}.should raise_exception(APIError)
+              end
             end
           end
         end

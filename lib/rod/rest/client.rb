@@ -1,6 +1,4 @@
-require 'json'
 require 'active_model/naming'
-require 'cgi'
 
 require 'rod/rest/exception'
 
@@ -18,7 +16,7 @@ module Rod
         metadata = options.fetch(:metadata)
         @parser = options[:parser] || JSON
         @factory = options[:factory] || ProxyFactory
-        @cgi = options[:cgi] || CGI
+        @url_encoder = options[:url_encoder] || CGI
 
         define_counters(metadata)
         define_finders(metadata)
@@ -34,6 +32,14 @@ module Rod
         __send__(primary_finder_method_name(object_stub[:type]),object_stub[:rod_id])
       end
 
+      # Fetch object related via the association to the +subject+.
+      # The association name is +association_name+ and the object returned is
+      # the +index+-th element in the collection.
+      def fetch_related_object(subject,association_name,index)
+        check_subject_and_association(subject,association_name)
+        __send__(association_method_name(subject.type,association_name),subject.rod_id,index)
+      end
+
       private
       def define_counters(metadata)
         metadata.resources.each do |resource|
@@ -41,8 +47,8 @@ module Rod
             get_parsed_response(resource_path(resource))[:count]
           end
           resource.plural_associations.each do |association|
-            self.class.send(:define_method,association_count_method_name(resource,association)) do |id|
-              get_parsed_response(association_count_path(resource,id,association))[:count]
+            self.class.send(:define_method,association_count_method_name(resource,association.name)) do |id|
+              get_parsed_response(association_count_path(resource,id,association.name))[:count]
             end
           end
         end
@@ -54,8 +60,8 @@ module Rod
             @factory.build(get_parsed_response(primary_resource_finder_path(resource,id)))
           end
           resource.indexed_properties.each do |property|
-            self.class.send(:define_method,finder_method_name(resource,property)) do |value|
-              get_parsed_response(resource_finder_path(resource,property,value)).map{|hash| @factory.build(hash) }
+            self.class.send(:define_method,finder_method_name(resource,property.name)) do |value|
+              get_parsed_response(resource_finder_path(resource,property.name,value)).map{|hash| @factory.build(hash) }
             end
           end
         end
@@ -64,8 +70,8 @@ module Rod
       def define_relations(metadata)
         metadata.resources.each do |resource|
           resource.plural_associations.each do |association|
-            self.class.send(:define_method,association_method_name(resource,association)) do |id,index|
-              @factory.build(get_parsed_response(association_path(resource,association,id,index)))
+            self.class.send(:define_method,association_method_name(resource,association.name)) do |id,index|
+              @factory.build(get_parsed_response(association_path(resource,association.name,id,index)))
             end
           end
         end
@@ -100,6 +106,12 @@ module Rod
         end
       end
 
+      def check_subject_and_association(subject,association_name)
+        unless self.respond_to?(association_method_name(subject.type,association_name))
+          raise APIError.new(invalid_method_error(association_method_name(subject.type,association_name)))
+        end
+      end
+
       def resource_path(resource)
         "/#{plural_resource_name(resource)}"
       end
@@ -108,16 +120,16 @@ module Rod
         "/#{plural_resource_name(resource)}/#{id}"
       end
 
-      def resource_finder_path(resource,property,value)
-        "/#{plural_resource_name(resource)}#{finder_query(property,value)}"
+      def resource_finder_path(resource,property_name,value)
+        "/#{plural_resource_name(resource)}#{finder_query(property_name,value)}"
       end
 
-      def association_count_path(resource,id,association)
-        "/#{plural_resource_name(resource)}/#{id}/#{association.name}"
+      def association_count_path(resource,id,association_name)
+        "/#{plural_resource_name(resource)}/#{id}/#{association_name}"
       end
 
-      def association_path(resource,association,id,index)
-        "/#{plural_resource_name(resource)}/#{id}/#{association.name}/#{index}"
+      def association_path(resource,association_name,id,index)
+        "/#{plural_resource_name(resource)}/#{id}/#{association_name}/#{index}"
       end
 
       def plural_resource_name(resource)
@@ -137,20 +149,20 @@ module Rod
         "find_#{singular_resource_name(resource)}"
       end
 
-      def finder_method_name(resource,property)
-        "find_#{plural_resource_name(resource)}_by_#{property.name}"
+      def finder_method_name(resource,property_name)
+        "find_#{plural_resource_name(resource)}_by_#{property_name}"
       end
 
-      def association_count_method_name(resource,association)
-        "#{singular_resource_name(resource)}_#{association.name}_count"
+      def association_count_method_name(resource,association_name)
+        "#{singular_resource_name(resource)}_#{association_name}_count"
       end
 
-      def association_method_name(resource,association)
-        "#{singular_resource_name(resource)}_#{association.name.singularize}"
+      def association_method_name(resource,association_name)
+        "#{singular_resource_name(resource)}_#{association_name.singularize}"
       end
 
-      def finder_query(property,value)
-        "?#{@cgi.escape(property.name)}=#{@cgi.escape(value)}"
+      def finder_query(property_name,value)
+        "?#{@url_encoder.escape(property_name)}=#{@url_encoder.escape(value)}"
       end
 
       def invalid_stub_error(object_stub)

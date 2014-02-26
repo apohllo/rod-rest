@@ -7,20 +7,34 @@ module Rod
     class Client
       # Options:
       # * http_client - library used to talk via HTTP (e.g. Faraday)
-      # * metadata - metadata describing the remote database
       # * parser - parser used to parse the incoming data (JSON by default)
       # * factory - factory used to build the proxy objects
       # * url_encoder - encoder used to encode URL strings (CGI by default)
+      # * metadata - metadata describing the remote database (optional - it is
+      #   retrieved via the API if not given; in that case metadata_factory must
+      #   be provided).
+      # * metadata_factory - factory used to build the metadata (used only if
+      #   metadata was not provided).
       def initialize(options={})
         @web_client = options.fetch(:http_client)
-        metadata = options.fetch(:metadata)
         @parser = options[:parser] || JSON
         @factory = options[:factory] || ProxyFactory
         @url_encoder = options[:url_encoder] || CGI
 
-        define_counters(metadata)
-        define_finders(metadata)
-        define_relations(metadata)
+        @metadata = options[:metadata]
+        if @metadata
+          define_methods(@metadata)
+        else
+          @metadata_factory = options[:metadata_factory] || Metadata
+        end
+      end
+
+      # Returns the Database metadata.
+      def metadata
+        return @metadata unless @metadata.nil?
+        @metadata = fetch_metadata
+        define_methods(@metadata)
+        @metadata
       end
 
       # Fetch the object from the remote API. The method requires the stub of
@@ -40,14 +54,39 @@ module Rod
         __send__(association_method_name(subject.type,association_name),subject.rod_id,index)
       end
 
+      # Overrided in order to fetch the metadata when it was not provided in the
+      # constructor.
+      def method_missing(*args)
+        unless @metadata.nil?
+          super
+        end
+        @metadata = fetch_metadata
+        define_methods(@metadata)
+        self.send(*args)
+      end
+
       private
+      def fetch_metadata
+        response = @web_client.get(metadata_path())
+        if response.status != 200
+          raise APIError.new(no_metadata_error())
+        end
+        @metadata = @metadata_factory.new(response.body)
+      end
+
+      def define_methods(metadata)
+        define_counters(metadata)
+        define_finders(metadata)
+        define_relations(metadata)
+      end
+
       def define_counters(metadata)
         metadata.resources.each do |resource|
-          self.class.send(:define_method,"#{plural_resource_name(resource)}_count") do
+          self.define_singleton_method("#{plural_resource_name(resource)}_count") do
             get_parsed_response(resource_path(resource))[:count]
           end
           resource.plural_associations.each do |association|
-            self.class.send(:define_method,association_count_method_name(resource,association.name)) do |id|
+            self.define_singleton_method(association_count_method_name(resource,association.name)) do |id|
               get_parsed_response(association_count_path(resource,id,association.name))[:count]
             end
           end
@@ -56,11 +95,11 @@ module Rod
 
       def define_finders(metadata)
         metadata.resources.each do |resource|
-          self.class.send(:define_method,primary_finder_method_name(resource)) do |id|
+          self.define_singleton_method(primary_finder_method_name(resource)) do |id|
             @factory.build(get_parsed_response(primary_resource_finder_path(resource,id)))
           end
           resource.indexed_properties.each do |property|
-            self.class.send(:define_method,finder_method_name(resource,property.name)) do |value|
+            self.define_singleton_method(finder_method_name(resource,property.name)) do |value|
               get_parsed_response(resource_finder_path(resource,property.name,value)).map{|hash| @factory.build(hash) }
             end
           end
@@ -70,7 +109,7 @@ module Rod
       def define_relations(metadata)
         metadata.resources.each do |resource|
           resource.plural_associations.each do |association|
-            self.class.send(:define_method,association_method_name(resource,association.name)) do |id,index|
+            self.define_singleton_method(association_method_name(resource,association.name)) do |id,index|
               @factory.build(get_parsed_response(association_path(resource,association.name,id,index)))
             end
           end
@@ -132,6 +171,10 @@ module Rod
         "/#{plural_resource_name(resource)}/#{id}/#{association_name}/#{index}"
       end
 
+      def metadata_path
+        "/metadata"
+      end
+
       def plural_resource_name(resource)
         singular_resource_name(resource).pluralize
       end
@@ -171,6 +214,10 @@ module Rod
 
       def invalid_method_error(plural_name)
         "The API doesn't have the method '#{plural_name}'"
+      end
+
+      def no_metadata_error
+        "The API doesn't provide metadata."
       end
     end
   end

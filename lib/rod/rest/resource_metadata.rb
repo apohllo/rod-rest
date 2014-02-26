@@ -10,7 +10,7 @@ module Rod
       #   properties
       def initialize(options={})
         @name = options.fetch(:name)
-        @property_factory = options[:property_factory] || Property
+        @property_factory = options[:property_factory] || PropertyMetadata
         description = options.fetch(:description)
         @fields = create_properties(description[:fields])
         @singular_associations = create_properties(description[:singular_associations])

@@ -26,7 +26,3 @@ def stub_class(full_name)
     end
   end
 end
-
-RSpec.configure do |config|
-  config.mock_with :rr
-end

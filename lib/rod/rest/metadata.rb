@@ -24,9 +24,9 @@ module Rod
 
       private
       def create_resource_descriptions(hash_description)
-        hash_description.map do |name,resource_description|
+        hash_description.map do |name,description|
           next if name == ROD_KEY
-          @resource_metadata_factory.new(resource_description)
+          @resource_metadata_factory.new(name: name,description: description)
         end.compact
       end
     end

@@ -7,5 +7,6 @@ namespace :test do
     sh "rspec test/spec/collection_proxy.rb"
     sh "rspec test/spec/json_serializer.rb"
     sh "rspec test/spec/metadata.rb"
+    sh "rspec test/spec/resource_metadata.rb"
   end
 end

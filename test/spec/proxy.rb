@@ -13,21 +13,34 @@ module Rod
                                   metadata
       }
       let(:client)              { client = stub!.fetch_object(schumaher_hash) { schumaher_object }.subject }
-      let(:collection_proxy_factory) { stub!.new(anything,drivers_association_name,client) { collection_proxy }.subject }
+      let(:collection_proxy_factory) { stub!.new(anything,drivers_association_name,drivers_count,client) { collection_proxy }.subject }
       let(:collection_proxy)    { Object.new }
-      let(:id_field)            { stub!.name { :rod_id }.subject }
-      let(:name_field)          { stub!.name { :name }.subject }
-      let(:owner_association)   { stub!.name { :owner }.subject }
-      let(:drivers_association) { stub!.name { drivers_association_name }.subject }
-      let(:drivers_association_name)  { :drivers }
+      let(:id_field)            { property = stub!.symbolic_name { :rod_id }.subject
+                                  stub(property).name { "rod_id" }
+                                  property
+      }
+      let(:name_field)          { property = stub!.symbolic_name { :name }.subject
+                                  stub(property).name { "name" }
+                                  property
+      }
+      let(:owner_association)   { property = stub!.symbolic_name { :owner }.subject
+                                  stub(property).name { "owner" }
+                                  property
+      }
+      let(:drivers_association) { property = stub!.symbolic_name { drivers_association_name.to_sym }.subject
+                                  stub(property).name { drivers_association_name }
+                                  property
+      }
+      let(:drivers_association_name)  { "drivers"}
 
       let(:car_type)            { "Test::Car" }
       let(:mercedes_300_hash)   { { rod_id: mercedes_300_id, name: mercedes_300_name, type: car_type,
-                                    owner: { rod_id: schumaher_id, type: person_type} } }
+                                    owner: { rod_id: schumaher_id, type: person_type}, drivers: { count: drivers_count } } }
       let(:mercedes_300_id)     { 1 }
       let(:mercedes_300_name)   { "Mercedes 300" }
 
       let(:person_type)         { "Test::Person" }
+      let(:drivers_count)       { 1 }
       let(:schumaher_hash)      { { rod_id: schumaher_id, type: person_type } }
       let(:schumaher_id)        { 2 }
       let(:schumaher_object)    { Object.new }
@@ -38,8 +51,12 @@ module Rod
         proxy.new(mercedes_300_hash).should_not == nil
       end
 
-      it "refuses to create instances from invalid data" do
+      it "refuses to create instances with missing rod_id" do
         lambda { proxy.new({}) }.should raise_error(InvalidData)
+      end
+
+      it "refuses to create instances with missing type" do
+        lambda { proxy.new({rod_id: mercedes_300_id}) }.should raise_error(InvalidData)
       end
 
       describe "created instance" do

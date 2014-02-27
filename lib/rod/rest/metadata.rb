@@ -26,7 +26,7 @@ module Rod
       def create_resource_descriptions(hash_description)
         hash_description.map do |name,description|
           next if restricted_name?(name)
-          @resource_metadata_factory.new(name: name,description: description)
+          @resource_metadata_factory.new(name,description)
         end.compact
       end
 

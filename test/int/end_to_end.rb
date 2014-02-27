@@ -1,6 +1,5 @@
 require 'bundler/setup'
 require 'rod'
-require 'ruby-debug'
 require 'rod/rest'
 require 'rack'
 
@@ -25,6 +24,11 @@ end
 module Rod
   module Rest
     describe "end-to-end tests" do
+      def verify_person_equality(person1,person2)
+        person1.name.should == person2.name
+        person1.surname.should == person2.surname
+      end
+
       PATH = "data/end_to_end"
       SCHUMAHER_NAME = "Michael"
       SCHUMAHER_SURNAME = "Schumaher"
@@ -75,6 +79,7 @@ module Rod
 
         before(:all) do
           Thread.new { API.start_with_database(::Database.instance,{},logging: nil) }
+          sleep 0.5
         end
 
         after(:all) do
@@ -82,7 +87,6 @@ module Rod
         end
 
         example "API serves the metadata" do
-          sleep 0.5
           client.metadata.resources.size.should == 3
           person = client.metadata.resources.find{|r| r.name == "Person" }
           person.fields.size == 2
@@ -98,8 +102,35 @@ module Rod
         example "Schumaher might be retrieved by id" do
           schumaher_in_rod = Person.find_by_name(SCHUMAHER_NAME)
           schumaher_via_api = client.find_person(schumaher_in_rod.rod_id)
-          schumaher_via_api.name.should == schumaher_in_rod.name
-          schumaher_via_api.surname.should == schumaher_in_rod.surname
+          verify_person_equality(schumaher_via_api,schumaher_in_rod)
+        end
+
+        example "Kubica might be retrieved by name" do
+          kubica_in_rod = Person.find_by_name(KUBICA_NAME)
+          kubica_via_api = client.find_people_by_name(KUBICA_NAME).first
+          verify_person_equality(kubica_via_api,kubica_in_rod)
+        end
+
+        example "Mercedes might be retrieved by id" do
+          mercedes_in_rod = Car.find_by_brand(MERCEDES_300_NAME)
+          mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
+          mercedes_via_api.brand.should == mercedes_in_rod.brand
+        end
+
+        example "Mercedes owner is retrieved properly" do
+          mercedes_in_rod = Car.find_by_brand(MERCEDES_300_NAME)
+          schumaher_in_rod = Person.find_by_name(SCHUMAHER_NAME)
+          mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
+          verify_person_equality(mercedes_via_api.owner,schumaher_in_rod)
+        end
+
+        example "Mercedes drivers are retrieved properly" do
+          mercedes_in_rod = Car.find_by_brand(MERCEDES_300_NAME)
+          schumaher_in_rod = Person.find_by_name(SCHUMAHER_NAME)
+          kubica_in_rod = Person.find_by_name(KUBICA_NAME)
+          mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
+          verify_person_equality(mercedes_via_api.drivers[0],schumaher_in_rod)
+          verify_person_equality(mercedes_via_api.drivers[1],kubica_in_rod)
         end
       end
     end

@@ -7,16 +7,15 @@ module Rod
       attr_reader :size
 
       # Initializes a CollectionPorxy.
-      # Options:
-      # * +:size+ - the size of the collection
-      # * +:client+ - the REST API client
       # * +:proxy+ - the object this collection belongs to
       # * +:association_name+ - the name of proxie's plural association this collection is returned for
-      def initialize(options={})
-        @size = options.fetch(:size)
-        @client = options.fetch(:client)
-        @association_name = options.fetch(:association_name)
-        @proxy = options.fetch(:proxy)
+      # * +:size+ - the size of the collection
+      # * +:client+ - the REST API client
+      def initialize(proxy,association_name,size,client)
+        @proxy = proxy
+        @association_name = association_name
+        @size = size
+        @client = client
       end
 
       # Returns true if the collection is empty (i.e. its size == 0).

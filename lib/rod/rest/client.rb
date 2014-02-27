@@ -192,7 +192,7 @@ module Rod
       end
 
       def association_method_name(resource,association_name)
-        "#{singular_resource_name(resource)}_#{association_name.singularize}"
+        "#{singular_resource_name(resource)}_#{association_name.to_s.singularize}"
       end
 
       def finder_query(property_name,value)

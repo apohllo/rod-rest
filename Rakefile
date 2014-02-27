@@ -1,3 +1,5 @@
+task :default => ["test:spec", "test:int"]
+
 namespace :test do
   desc "Specs"
   task :spec do
@@ -10,5 +12,10 @@ namespace :test do
     sh "rspec test/spec/resource_metadata.rb"
     sh "rspec test/spec/property_metadata.rb"
     sh "rspec test/spec/proxy_factory.rb"
+  end
+
+  desc "Integration tests" 
+  task :int do
+    sh "rspec test/int/end_to_end.rb"
   end
 end

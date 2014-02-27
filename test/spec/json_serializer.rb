@@ -2,12 +2,15 @@ require 'bundler/setup'
 require_relative 'test_helper'
 require 'rod/rest/json_serializer'
 
+stub_class 'Rod::Model'
+
 module Rod
   module Rest
     describe JsonSerializer do
       let(:serializer)            { JsonSerializer.new }
       let(:object)                { object = stub!.class { resource }.subject
                                     stub(object).rod_id { rod_id }
+                                    stub(object).is_a?(Rod::Model) { true }
                                     object
       }
       let(:rod_id)                { 1 }
@@ -54,7 +57,7 @@ module Rod
         let(:owner_association)     { stub!.name { owner_association_name }.subject }
         let(:owner_association_name){ "owner" }
         let(:owner)                 { owner = stub!.rod_id { owner_rod_id }.subject
-                                      stub(owner).type { owner_type }.subject
+                                      stub(owner).class { owner_type }.subject
                                       owner
         }
         let(:owner_rod_id)          { 10 }

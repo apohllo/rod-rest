@@ -5,7 +5,7 @@ require 'rod/rest/collection_proxy'
 module Rod
   module Rest
     describe CollectionProxy do
-      let(:collection)        { CollectionProxy.new(proxy: mercedes_proxy, association_name: association_name,client: client,size: size) }
+      let(:collection)        { CollectionProxy.new(mercedes_proxy,association_name,size,client) }
       let(:mercedes_proxy)    { Object.new }
       let(:association_name)  { "drivers" }
       let(:size)              { 0 }

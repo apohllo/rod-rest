@@ -23,23 +23,17 @@ module Rod
               if resource.respond_to?("find_all_by_#{name}")
                 serializer.serialize(resource.send("find_all_by_#{name}",value))
               else
-                status 404
+                report_not_found
                 serializer.serialize(nil)
               end
             else
-              status 404
+              report_not_found
               serializer.serialize(nil)
             end
           end
 
           get "/#{resource_name}/:id" do
-            object = resource.find_by_rod_id(params[:id].to_i)
-            if object
-              serializer.serialize(object)
-            else
-              status 404
-              serializer.serialize(nil)
-            end
+            fetch_resource(params[:id],resource,serializer)
           end
 
           resource.plural_associations.each do |property|
@@ -48,27 +42,16 @@ module Rod
               if object
                 serializer.serialize({count: object.send("#{property.name}_count") })
               else
-                status 404
+                report_not_found
                 serializer.serialize(nil)
               end
             end
 
             get "/#{resource_name}/:id/#{property.name}/:index" do
-              object = resource.find_by_rod_id(params[:id].to_i)
-              if object
-                related_object = object.send(property.name)[params[:index].to_i]
-                if related_object
-                  serializer.serialize(related_object)
-                else
-                  status 404
-                  serializer.serialize(nil)
-                end
-              else
-                status 404
-                serializer.serialize(nil)
-              end
+              fetch_related_resource(params[:id],params[:index],resource,property,serializer)
             end
           end
+
         end
 
         # Build metadata API for the given +metadata+.
@@ -94,6 +77,66 @@ module Rod
           end
           run!(web_options)
         end
+      end
+
+      private
+      def fetch_resource(id_param,resource,serializer)
+        id = extract_elements(id_param)
+        result =
+          if Integer === id
+            fetch_one(id,resource)
+          else
+            fetch_collection(id,resource)
+          end
+        serializer.serialize(result)
+      end
+
+      def fetch_related_resource(id_param,index_param,resource,property,serializer)
+        object = resource.find_by_rod_id(id_param.to_i)
+        result =
+          if object
+            index = extract_elements(index_param)
+            if Integer === index
+              fetch_one_related(index,object,property)
+            else
+              fetch_related_collection(index,object,property)
+            end
+          else
+            report_not_found
+          end
+        serializer.serialize(result)
+      end
+
+      def fetch_collection(ids,resource)
+        ids.map{|id| resource.find_by_rod_id(id) }.compact
+      end
+
+      def fetch_one(id,resource)
+        resource.find_by_rod_id(id) || report_not_found
+      end
+
+      def fetch_related_collection(indices,object,property)
+        indices.map{|index| object.send(property.name)[index] }.compact
+      end
+
+      def fetch_one_related(index,object,property)
+        object.send(property.name)[index] || report_not_found
+      end
+
+      def extract_elements(id)
+        case id
+        when /^(\d+)\.\.(\d+)/
+          ($~[1].to_i..$~[2].to_i)
+        when /,/
+          id.split(",").map(&:to_i)
+        else
+          id.to_i
+        end
+      end
+
+      def report_not_found
+        status 404
+        nil
       end
     end
   end

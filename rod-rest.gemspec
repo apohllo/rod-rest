@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   s.name = "rod-rest"
   s.version = Rod::Rest::VERSION
   s.date = "#{Time.now.strftime("%Y-%m-%d")}"
-  s.required_ruby_version = '= 1.9.2'
+  s.required_ruby_version = '>= 1.9.2'
   s.platform    = Gem::Platform::RUBY
   s.authors = ['Aleksander Pohl']
   s.email   = ["apohllo@o2.pl"]

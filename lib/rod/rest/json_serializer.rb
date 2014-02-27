@@ -13,7 +13,7 @@ module Rod
       #   drivers: { count: 3 }                 # plural association value
       # }
       def serialize(object)
-        result = { rod_id: object.rod_id, type: object.type }
+        result = { rod_id: object.rod_id, type: object.class.to_s }
         resource = object.class
         resource.fields.each do |field|
           result[field.name] = object.send(field.name)

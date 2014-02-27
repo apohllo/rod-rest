@@ -6,7 +6,7 @@ module Rod
   module Rest
     describe Metadata do
       let(:metadata)                  { Metadata.new(description: description, parser: parser, resource_metadata_factory: resource_metadata_factory) }
-      let(:parser)                    { stub!.parse(description) { hash_description }.subject }
+      let(:parser)                    { stub!.parse(description,anything) { hash_description }.subject }
       let(:description)               { Object.new }
       let(:hash_description)          { { resource_name => resource_description, "Rod" => rod_description } }
       let(:resource_description)      { Object.new }
@@ -17,7 +17,7 @@ module Rod
 
       it "creates the metadata from the description" do
         metadata.resources
-        expect(parser).to have_received.parse(description)
+        expect(parser).to have_received.parse(description,anything)
       end
 
       it "returns collection of resource descriptions" do

@@ -25,7 +25,7 @@ module Rod
 
       describe "without metadata provided to the client" do
         let(:client)                { Client.new(http_client: web_client,metadata_factory: metadata_factory, factory: factory) }
-        let(:metadata_factory)      { stub!.new(metadata_description) { metadata }.subject }
+        let(:metadata_factory)      { stub!.new(description: metadata_description) { metadata }.subject }
         let(:metadata_description)  { "{}" }
 
         before do

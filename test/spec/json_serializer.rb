@@ -8,7 +8,6 @@ module Rod
       let(:serializer)            { JsonSerializer.new }
       let(:object)                { object = stub!.class { resource }.subject
                                     stub(object).rod_id { rod_id }
-                                    stub(object).type { type }
                                     object
       }
       let(:rod_id)                { 1 }
@@ -16,6 +15,7 @@ module Rod
       let(:resource)              { resource = stub!.fields { fields }.subject
                                     stub(resource).singular_associations { singular_associations }
                                     stub(resource).plural_associations { plural_associations }
+                                    stub(resource).to_s { type }
                                     resource
       }
       let(:fields)                { [] }

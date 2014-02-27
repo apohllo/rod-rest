@@ -5,25 +5,30 @@ require 'rod/rest/property_metadata'
 module Rod
   module Rest
     describe PropertyMetadata do
-      let(:property_metadata) { PropertyMetadata.new(description) }
+      let(:property_metadata) { PropertyMetadata.new(name,options) }
 
       describe "constructor" do
         it "forbids to create property without name" do
-          lambda { PropertyMetadata.new({}) }.should raise_error(KeyError)
+          lambda { PropertyMetadata.new(nil,{}) }.should raise_error(ArgumentError)
         end
       end
 
       describe "#name" do
-        let(:description)       { { name: name, type: :integer } }
-        let(:name)              { "age" }
+        let(:options)       { { type: :integer } }
+        let(:name)          { :age }
+
+        it "converts its name to string" do
+          property_metadata.name.should be_a(String)
+        end
 
         it "returns the name of the poperty" do
-          property_metadata.name == name
+          property_metadata.name.should == name.to_s
         end
       end
 
       describe "#indexed?" do
-        let(:description)       { { name: "brand", type: :string, index: index } }
+        let(:options)       { { type: :string, index: index } }
+        let(:name)          { :brand }
 
         describe "with index" do
           let(:index) { :hash }

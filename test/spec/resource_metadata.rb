@@ -6,9 +6,9 @@ module Rod
   module Rest
     describe ResourceMetadata do
       describe "with description of 2 fields, 1 singular association and 1 plural association" do
-        let(:resource_metadata)       { ResourceMetadata.new(name: name,description: description, property_factory: property_factory) }
-        let(:name)                    { "Car" }
-        let(:description)             { { fields: fields, singular_associations: singular_associations, plural_associations: plural_associations } }
+        let(:resource_metadata)       { ResourceMetadata.new(name,description, property_factory: property_factory) }
+        let(:name)                    { :Car }
+        let(:description)             { { fields: fields, has_one: singular_associations, has_many: plural_associations } }
         let(:fields)                  { [brand_field,age_field] }
         let(:singular_associations)   { [owner_association] }
         let(:plural_associations)     { [drivers_association] }
@@ -27,8 +27,12 @@ module Rod
                                         factory
         }
 
+        it "has a String name" do
+          resource_metadata.name.should be_a(String)
+        end
+
         it "returns its name" do
-          resource_metadata.name.should == name
+          resource_metadata.name.should == name.to_s
         end
 
         it "has 2 fields" do

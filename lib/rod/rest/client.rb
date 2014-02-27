@@ -1,10 +1,13 @@
 require 'active_model/naming'
 
 require 'rod/rest/exception'
+require 'rod/rest/naming'
 
 module Rod
   module Rest
     class Client
+      include Naming
+
       # Options:
       # * http_client - library used to talk via HTTP (e.g. Faraday)
       # * parser - parser used to parse the incoming data (JSON by default)
@@ -71,7 +74,7 @@ module Rod
         if response.status != 200
           raise APIError.new(no_metadata_error())
         end
-        @metadata = @metadata_factory.new(response.body)
+        @metadata = @metadata_factory.new(description: response.body)
       end
 
       def define_methods(metadata)
@@ -173,19 +176,6 @@ module Rod
 
       def metadata_path
         "/metadata"
-      end
-
-      def plural_resource_name(resource)
-        singular_resource_name(resource).pluralize
-      end
-
-      def singular_resource_name(resource)
-        if resource.respond_to?(:name)
-          name = resource.name
-        else
-          name = resource
-        end
-        name.gsub("::","_").downcase
       end
 
       def primary_finder_method_name(resource)

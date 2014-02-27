@@ -6,15 +6,12 @@ module Rod
       # Initialize new Proxy factory based on the +metadata+ and associated with
       # the +client+, used to fetch the descriptions of the objects.
       # Options:
-      # * metadata - metadata describing the remote object
-      # * client - client used to access other objects
-      # * type - the type of the proxy object
       # * collection_proxy_factory - factory used to create collection proxies
       #   for plural associations
-      def initialize(options={})
-        @metadata = options.fetch(:metadata)
-        @client = options.fetch(:client)
-        @type = options.fetch(:type)
+      def initialize(metadata,client,options={})
+        @metadata = metadata
+        @client = client
+        @type = @metadata.name
         @collection_proxy_factory = options.fetch(:collection_proxy_factory)
         @klass = build_class(@metadata)
       end

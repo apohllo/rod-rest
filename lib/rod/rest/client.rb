@@ -11,7 +11,7 @@ module Rod
       # Options:
       # * http_client - library used to talk via HTTP (e.g. Faraday)
       # * parser - parser used to parse the incoming data (JSON by default)
-      # * factory - factory used to build the proxy objects
+      # * factory - factory class used to build the proxy objects
       # * url_encoder - encoder used to encode URL strings (CGI by default)
       # * metadata - metadata describing the remote database (optional - it is
       #   retrieved via the API if not given; in that case metadata_factory must
@@ -21,12 +21,12 @@ module Rod
       def initialize(options={})
         @web_client = options.fetch(:http_client)
         @parser = options[:parser] || JSON
-        @factory = options[:factory] || ProxyFactory
+        @proxy_factory_class = options[:factory] || ProxyFactory
         @url_encoder = options[:url_encoder] || CGI
 
         @metadata = options[:metadata]
         if @metadata
-          define_methods(@metadata)
+          configure_with_metadata(@metadata)
         else
           @metadata_factory = options[:metadata_factory] || Metadata
         end
@@ -36,7 +36,7 @@ module Rod
       def metadata
         return @metadata unless @metadata.nil?
         @metadata = fetch_metadata
-        define_methods(@metadata)
+        configure_with_metadata(@metadata)
         @metadata
       end
 
@@ -64,7 +64,7 @@ module Rod
           super
         end
         @metadata = fetch_metadata
-        define_methods(@metadata)
+        configure_with_metadata(@metadata)
         self.send(*args)
       end
 
@@ -77,10 +77,11 @@ module Rod
         @metadata = @metadata_factory.new(description: response.body)
       end
 
-      def define_methods(metadata)
+      def configure_with_metadata(metadata)
         define_counters(metadata)
         define_finders(metadata)
         define_relations(metadata)
+        @factory = @proxy_factory_class.new(metadata.resources,self)
       end
 
       def define_counters(metadata)

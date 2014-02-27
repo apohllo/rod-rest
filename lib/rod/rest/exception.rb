@@ -3,5 +3,6 @@ module Rod
     class MissingResource < RuntimeError; end
     class APIError < RuntimeError; end
     class InvalidData < RuntimeError; end
+    class UnknownResource < RuntimeError; end
   end
 end

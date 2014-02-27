@@ -9,5 +9,6 @@ namespace :test do
     sh "rspec test/spec/metadata.rb"
     sh "rspec test/spec/resource_metadata.rb"
     sh "rspec test/spec/property_metadata.rb"
+    sh "rspec test/spec/proxy_factory.rb"
   end
 end

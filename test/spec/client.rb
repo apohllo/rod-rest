@@ -9,7 +9,8 @@ stub_class 'Rod::Rest::ProxyFactory'
 module Rod
   module Rest
     describe Client do
-      let(:factory)       { stub!.subject }
+      let(:factory_class) { stub!.new([resource1],is_a(Client)) { factory }.subject }
+      let(:factory)       { Object.new }
       let(:metadata)      { stub!.resources { [resource1] }.subject }
       let(:resource1)     { resource = stub!.name { resource_name }.subject
                             stub(resource).indexed_properties { indexed_properties }
@@ -24,7 +25,7 @@ module Rod
       let(:web_client)    { Object.new }
 
       describe "without metadata provided to the client" do
-        let(:client)                { Client.new(http_client: web_client,metadata_factory: metadata_factory, factory: factory) }
+        let(:client)                { Client.new(http_client: web_client,metadata_factory: metadata_factory, factory: factory_class) }
         let(:metadata_factory)      { stub!.new(description: metadata_description) { metadata }.subject }
         let(:metadata_description)  { "{}" }
 
@@ -55,7 +56,7 @@ module Rod
       end
 
       describe "with metadata provided to the client" do
-        let(:client)        { Client.new(http_client: web_client,metadata: metadata, factory: factory) }
+        let(:client)        { Client.new(http_client: web_client,metadata: metadata, factory: factory_class) }
 
         let(:invalid_id)    { 1000 }
         let(:invalid_index) { 2000 }

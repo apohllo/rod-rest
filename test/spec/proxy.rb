@@ -5,10 +5,11 @@ require 'rod/rest/proxy'
 module Rod
   module Rest
     describe Proxy do
-      let(:proxy)               { Proxy.new(metadata: metadata,client: client,type: car_type, collection_proxy_factory: collection_proxy_factory) }
+      let(:proxy)               { Proxy.new(metadata,client,collection_proxy_factory: collection_proxy_factory) }
       let(:metadata)            { metadata = stub!.fields { [id_field,name_field] }.subject
                                   stub(metadata).singular_associations { [owner_association] }
                                   stub(metadata).plural_associations { [drivers_association] }
+                                  stub(metadata).name { car_type }
                                   metadata
       }
       let(:client)              { client = stub!.fetch_object(schumaher_hash) { schumaher_object }.subject }

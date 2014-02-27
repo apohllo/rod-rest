@@ -26,6 +26,19 @@ module Rod
         end
       end
 
+      describe "#symbolic_name" do
+        let(:options)       { { type: :string } }
+        let(:name)          { :name }
+
+        it "converts its symbolic name to string" do
+          property_metadata.symbolic_name.should be_a(Symbol)
+        end
+
+        it "returns the symbolic name of the poperty" do
+          property_metadata.symbolic_name.should == name.to_sym
+        end
+      end
+
       describe "#indexed?" do
         let(:options)       { { type: :string, index: index } }
         let(:name)          { :brand }

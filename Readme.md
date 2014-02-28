@@ -16,7 +16,7 @@ It starts Sinatra application listening by default on port 4567.
 
 ## Client
 
-The client requires a `http_client` to be passed to the constructure. We
+The client requires a `http_client` to be passed to the constructor. We
 recommend Faraday, e.g.
 
 ```ruby
@@ -25,7 +25,7 @@ client = Rod::Rest::Client.new(http_client: faraday)
 ```
 
 The client automatically fetches metadata, so there is no need to set it up.
-Assuming you have the following Rod classes defined:
+Assuming you have the following Rod classes defined on the server side:
 
 ```ruby
 class Person < Rod::Model
@@ -41,7 +41,7 @@ end
 ```
 
 
-The client provides the following calls
+The client provides the following calls:
 
 ```ruby
 # find person by ROD id
@@ -56,9 +56,9 @@ client.find_people(1..3)
 client.find_person_by_name("Albert")
 
 # find person by surname
-client.find_person_by_surname
+client.find_person_by_surname("Einstein")
 
-# find car by bran
+# find car by brand
 car = client.find_car_by_brand("Mercedes")
 car.owner                                   # returns proxy to singular association
 car.drivers                                 # returns collection proxy
@@ -66,12 +66,14 @@ car.drivers.each do |driver|
   puts driver.name
 end
 
+puts car.drivers.first.name
+
 car.drivers[1..2].each do |driver|          # negative indices are not yet supported
   puts driver.surname
 end
 ```
   
-There are also some more low API call supported, by usually when you get the
+There are also some more low-level API calls supported, by usually when you get the
 first object of some larger graph, there is no need to use them.
 
 

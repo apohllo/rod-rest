@@ -52,14 +52,14 @@ client.find_people(1,2,3)
 # or
 client.find_people(1..3)
 
-# find person by name
-client.find_person_by_name("Albert")
+# find people by name
+client.find_people_by_name("Albert")
 
-# find person by surname
-client.find_person_by_surname("Einstein")
+# find people by surname
+client.find_people_by_surname("Einstein")
 
-# find car by brand
-car = client.find_car_by_brand("Mercedes")
+# find cars by brand
+car = client.find_cars_by_brand("Mercedes").first
 car.owner                                   # returns proxy to singular association
 car.drivers                                 # returns collection proxy
 car.drivers.each do |driver|

@@ -1,0 +1,11 @@
+0.5.0
+#inspect & #to_s for major classes
+ProxyCache
+Improved readme
+Caching in CollectionProxy
+Support for index ranges and collections
+Support for id ranges and collections
+0.0.1.1
+Fix Ruby restriction in gemspec
+0.0.1
+Working version of the API

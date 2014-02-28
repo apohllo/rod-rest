@@ -102,6 +102,9 @@ module Rod
           self.define_singleton_method(primary_finder_method_name(resource)) do |id|
             @factory.build(get_parsed_response(primary_resource_finder_path(resource,id)))
           end
+          self.define_singleton_method(plural_finder_method_name(resource)) do |*id|
+            get_parsed_response(plural_resource_finder_path(resource,id)).map{|hash| @factory.build(hash) }
+          end
           resource.indexed_properties.each do |property|
             self.define_singleton_method(finder_method_name(resource,property.name)) do |value|
               get_parsed_response(resource_finder_path(resource,property.name,value)).map{|hash| @factory.build(hash) }
@@ -115,6 +118,9 @@ module Rod
           resource.plural_associations.each do |association|
             self.define_singleton_method(association_method_name(resource,association.name)) do |id,index|
               @factory.build(get_parsed_response(association_path(resource,association.name,id,index)))
+            end
+            self.define_singleton_method(plural_association_method_name(resource,association.name)) do |id,*indices|
+              get_parsed_response(plural_association_path(resource,association.name,id,*indices)).map{|hash| @factory.build(hash) }
             end
           end
         end
@@ -163,6 +169,10 @@ module Rod
         "/#{plural_resource_name(resource)}/#{id}"
       end
 
+      def plural_resource_finder_path(resource,*ids)
+        "/#{plural_resource_name(resource)}/#{convert_path_elements(*ids)}"
+      end
+
       def resource_finder_path(resource,property_name,value)
         "/#{plural_resource_name(resource)}#{finder_query(property_name,value)}"
       end
@@ -175,12 +185,28 @@ module Rod
         "/#{plural_resource_name(resource)}/#{id}/#{association_name}/#{index}"
       end
 
+      def plural_association_path(resource,association_name,id,*indices)
+        "/#{plural_resource_name(resource)}/#{id}/#{association_name}/#{convert_path_elements(*indices)}"
+      end
+
       def metadata_path
         "/metadata"
       end
 
+      def convert_path_elements(*elements)
+        if elements.size == 1 && Range === elements.first
+          elements.first.to_s
+        else
+          elements.join(",")
+        end
+      end
+
       def primary_finder_method_name(resource)
         "find_#{singular_resource_name(resource)}"
+      end
+
+      def plural_finder_method_name(resource)
+        "find_#{plural_resource_name(resource)}"
       end
 
       def finder_method_name(resource,property_name)
@@ -193,6 +219,10 @@ module Rod
 
       def association_method_name(resource,association_name)
         "#{singular_resource_name(resource)}_#{association_name.to_s.singularize}"
+      end
+
+      def plural_association_method_name(resource,association_name)
+        "#{singular_resource_name(resource)}_#{association_name.to_s}"
       end
 
       def finder_query(property_name,value)
@@ -210,6 +240,8 @@ module Rod
       def no_metadata_error
         "The API doesn't provide metadata."
       end
+
+
     end
   end
 end

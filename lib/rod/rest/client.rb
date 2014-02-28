@@ -46,7 +46,7 @@ module Rod
       def fetch_object(object_stub)
         check_stub(object_stub)
         check_method(object_stub)
-        __send__(primary_finder_method_name(object_stub[:type]),object_stub[:rod_id])
+        __send__(primary_finder_method(object_stub[:type]),object_stub[:rod_id])
       end
 
       # Fetch object related via the association to the +subject+.
@@ -54,7 +54,7 @@ module Rod
       # the +index+-th element in the collection.
       def fetch_related_object(subject,association_name,index)
         check_subject_and_association(subject,association_name)
-        __send__(association_method_name(subject.type,association_name),subject.rod_id,index)
+        __send__(association_method(subject.type,association_name),subject.rod_id,index)
       end
 
       # Fetch objects related via the association to the +subject+.
@@ -63,10 +63,10 @@ module Rod
       # separated list of indices.
       def fetch_related_objects(subject,association_name,*indices)
         check_subject_and_association(subject,association_name)
-        __send__(plural_association_method_name(subject.type,association_name),subject.rod_id,*indices)
+        __send__(plural_association_method(subject.type,association_name),subject.rod_id,*indices)
       end
 
-      # Overrided in order to fetch the metadata when it was not provided in the
+      # Overrided in order to fetch the metadata if it was not provided in the
       # constructor.
       def method_missing(*args)
         unless @metadata.nil?
@@ -95,12 +95,12 @@ module Rod
 
       def define_counters(metadata)
         metadata.resources.each do |resource|
-          self.define_singleton_method("#{plural_resource_name(resource)}_count") do
-            get_parsed_response(resource_path(resource))[:count]
+          self.define_singleton_method(count_method(resource)) do
+            return_count(count_path(resource))
           end
           resource.plural_associations.each do |association|
-            self.define_singleton_method(association_count_method_name(resource,association.name)) do |id|
-              get_parsed_response(association_count_path(resource,id,association.name))[:count]
+            self.define_singleton_method(association_count_method(resource,association.name)) do |id|
+              return_count(association_count_path(resource,id,association.name))
             end
           end
         end
@@ -108,15 +108,15 @@ module Rod
 
       def define_finders(metadata)
         metadata.resources.each do |resource|
-          self.define_singleton_method(primary_finder_method_name(resource)) do |id|
-            @factory.build(get_parsed_response(primary_resource_finder_path(resource,id)))
+          self.define_singleton_method(primary_finder_method(resource)) do |id|
+            return_single(primary_resource_finder_path(resource,id))
           end
-          self.define_singleton_method(plural_finder_method_name(resource)) do |*id|
-            get_parsed_response(plural_resource_finder_path(resource,id)).map{|hash| @factory.build(hash) }
+          self.define_singleton_method(plural_finder_method(resource)) do |*id|
+            return_collection(plural_resource_finder_path(resource,id))
           end
           resource.indexed_properties.each do |property|
-            self.define_singleton_method(finder_method_name(resource,property.name)) do |value|
-              get_parsed_response(resource_finder_path(resource,property.name,value)).map{|hash| @factory.build(hash) }
+            self.define_singleton_method(finder_method(resource,property.name)) do |value|
+              return_collection(resource_finder_path(resource,property.name,value))
             end
           end
         end
@@ -125,14 +125,26 @@ module Rod
       def define_relations(metadata)
         metadata.resources.each do |resource|
           resource.plural_associations.each do |association|
-            self.define_singleton_method(association_method_name(resource,association.name)) do |id,index|
-              @factory.build(get_parsed_response(association_path(resource,association.name,id,index)))
+            self.define_singleton_method(association_method(resource,association.name)) do |id,index|
+              return_single(association_path(resource,association.name,id,index))
             end
-            self.define_singleton_method(plural_association_method_name(resource,association.name)) do |id,*indices|
-              get_parsed_response(plural_association_path(resource,association.name,id,*indices)).map{|hash| @factory.build(hash) }
+            self.define_singleton_method(plural_association_method(resource,association.name)) do |id,*indices|
+              return_collection(plural_association_path(resource,association.name,id,*indices))
             end
           end
         end
+      end
+
+      def return_count(path)
+        get_parsed_response(path)[:count]
+      end
+
+      def return_single(path)
+        @factory.build(get_parsed_response(path))
+      end
+
+      def return_collection(path)
+        get_parsed_response(path).map{|hash| @factory.build(hash) }
       end
 
       def get_parsed_response(path)
@@ -159,18 +171,18 @@ module Rod
       end
 
       def check_method(object_stub)
-        unless self.respond_to?(primary_finder_method_name(object_stub[:type]))
-          raise APIError.new(invalid_method_error(primary_finder_method_name(object_stub[:type])))
+        unless self.respond_to?(primary_finder_method(object_stub[:type]))
+          raise APIError.new(invalid_method_error(primary_finder_method(object_stub[:type])))
         end
       end
 
       def check_subject_and_association(subject,association_name)
-        unless self.respond_to?(association_method_name(subject.type,association_name))
-          raise APIError.new(invalid_method_error(association_method_name(subject.type,association_name)))
+        unless self.respond_to?(association_method(subject.type,association_name))
+          raise APIError.new(invalid_method_error(association_method(subject.type,association_name)))
         end
       end
 
-      def resource_path(resource)
+      def count_path(resource)
         "/#{plural_resource_name(resource)}"
       end
 
@@ -210,27 +222,31 @@ module Rod
         end
       end
 
-      def primary_finder_method_name(resource)
+      def count_method(resource)
+        "#{plural_resource_name(resource)}_count"
+      end
+
+      def primary_finder_method(resource)
         "find_#{singular_resource_name(resource)}"
       end
 
-      def plural_finder_method_name(resource)
+      def plural_finder_method(resource)
         "find_#{plural_resource_name(resource)}"
       end
 
-      def finder_method_name(resource,property_name)
+      def finder_method(resource,property_name)
         "find_#{plural_resource_name(resource)}_by_#{property_name}"
       end
 
-      def association_count_method_name(resource,association_name)
+      def association_count_method(resource,association_name)
         "#{singular_resource_name(resource)}_#{association_name}_count"
       end
 
-      def association_method_name(resource,association_name)
+      def association_method(resource,association_name)
         "#{singular_resource_name(resource)}_#{association_name.to_s.singularize}"
       end
 
-      def plural_association_method_name(resource,association_name)
+      def plural_association_method(resource,association_name)
         "#{singular_resource_name(resource)}_#{association_name.to_s}"
       end
 
@@ -249,8 +265,6 @@ module Rod
       def no_metadata_error
         "The API doesn't provide metadata."
       end
-
-
     end
   end
 end

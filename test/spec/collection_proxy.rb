@@ -150,6 +150,17 @@ module Rod
               drivers = [schumaher,kubica,alonzo]
               collection.each.map{|e| e }.should == drivers
             end
+
+          end
+        end
+
+        context "with 0 drivers" do
+          let(:size)  { 0 }
+
+          describe "#each" do
+            it "doesn't call the block" do
+              lambda { collection.each{|e| raise "Should not be executed" } }.should_not raise_error(Exception)
+            end
           end
         end
       end

@@ -62,8 +62,10 @@ module Rod
       # Iterates over the elements of the collection.
       def each
         if block_given?
-          self[0..@size-1].each do |object|
-            yield object
+          if @size > 0
+            self[0..@size-1].each do |object|
+              yield object
+            end
           end
         else
           enum_for(:each)

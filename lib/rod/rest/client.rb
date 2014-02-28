@@ -18,11 +18,18 @@ module Rod
       #   be provided).
       # * metadata_factory - factory used to build the metadata (used only if
       #   metadata was not provided).
+      # * proxy_cache - used to cache proxied objects. By default it is
+      #   ProxyCache. Might be disabled by passing +nil+.
       def initialize(options={})
         @web_client = options.fetch(:http_client)
         @parser = options[:parser] || JSON
         @proxy_factory_class = options[:factory] || ProxyFactory
         @url_encoder = options[:url_encoder] || CGI
+        if options.has_key?(:proxy_cache)
+          @proxy_cache = options[:proxy_cache]
+        else
+          @proxy_cache = ProxyCache.new
+        end
 
         @metadata = options[:metadata]
         if @metadata
@@ -90,7 +97,7 @@ module Rod
         define_counters(metadata)
         define_finders(metadata)
         define_relations(metadata)
-        @factory = @proxy_factory_class.new(metadata.resources,self)
+        @factory = @proxy_factory_class.new(metadata.resources,self,cache: @proxy_cache)
       end
 
       def define_counters(metadata)

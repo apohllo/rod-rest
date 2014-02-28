@@ -5,7 +5,7 @@ require 'rod/rest/proxy_factory'
 module Rod
   module Rest
     describe ProxyFactory do
-      let(:factory)           { ProxyFactory.new(metadata,client,proxy_class: proxy_class) }
+      let(:factory)           { ProxyFactory.new(metadata,client,proxy_class: proxy_class,cache: cache) }
       let(:metadata)          { [car_metadata,person_metadata] }
       let(:car_metadata)      { stub!.name { car_type }.subject }
       let(:person_metadata)   { stub!.name { person_type }.subject }
@@ -17,6 +17,7 @@ module Rod
                                 stub(klass).new(person_metadata,client) { person_proxy_factory }
                                 klass
       }
+      let(:cache)             { nil }
       let(:car_proxy_factory)     { stub!.new(mercedes_300_hash) { mercedes_300 }.subject }
       let(:person_proxy_factory)  { stub!.new(schumaher_hash) { schumaher }.subject }
       let(:mercedes_300_hash)     { { rod_id: mercedes_300_id, type: car_type } }
@@ -38,6 +39,20 @@ module Rod
 
       it "raises UnknownResource for unknown resource type" do
         lambda { factory.build(unknown_hash) }.should raise_error(UnknownResource)
+      end
+
+      describe "with cache" do
+        let(:cache)     { cache = mock!.has_key?(mercedes_300_hash) { false }.subject
+                          mock(cache).has_key?(mercedes_300_hash) { true }
+                          mock(cache).[](mercedes_300_hash) { mercedes_300 }
+                          cache
+        }
+
+        it "doesn't create objects twice" do
+          factory.build(mercedes_300_hash)
+          factory.build(mercedes_300_hash)
+          expect(car_proxy_factory).to have_received.new(mercedes_300_hash).once
+        end
       end
     end
   end

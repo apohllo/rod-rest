@@ -15,43 +15,14 @@ module Rod
         def build_api_for(resource,options={})
           serializer = options[:serializer] || JsonSerializer.new
           resource_name = options[:resource_name] || plural_resource_name(resource)
-          get "/#{resource_name}" do
-            if params.empty?
-              serializer.serialize({count: resource.count})
-            elsif params.size == 1
-              name, value = params.first
-              if resource.respond_to?("find_all_by_#{name}")
-                serializer.serialize(resource.send("find_all_by_#{name}",value))
-              else
-                report_not_found
-                serializer.serialize(nil)
-              end
-            else
-              report_not_found
-              serializer.serialize(nil)
-            end
-          end
 
-          get "/#{resource_name}/:id" do
-            fetch_resource(params[:id],resource,serializer)
-          end
+          define_index(resource,resource_name,serializer)
+          define_show(resource,resource_name,serializer)
 
           resource.plural_associations.each do |property|
-            get "/#{resource_name}/:id/#{property.name}" do
-              object = resource.find_by_rod_id(params[:id].to_i)
-              if object
-                serializer.serialize({count: object.send("#{property.name}_count") })
-              else
-                report_not_found
-                serializer.serialize(nil)
-              end
-            end
-
-            get "/#{resource_name}/:id/#{property.name}/:index" do
-              fetch_related_resource(params[:id],params[:index],resource,property,serializer)
-            end
+            define_association_index(resource,resource_name,property,serializer)
+            define_association_show(resource,resource_name,property,serializer)
           end
-
         end
 
         # Build metadata API for the given +metadata+.
@@ -77,34 +48,113 @@ module Rod
           end
           run!(web_options)
         end
-      end
 
-      private
-      def fetch_resource(id_param,resource,serializer)
-        id = extract_elements(id_param)
-        result =
-          if Integer === id
-            fetch_one(id,resource)
-          else
-            fetch_collection(id,resource)
-          end
-        serializer.serialize(result)
-      end
-
-      def fetch_related_resource(id_param,index_param,resource,property,serializer)
-        object = resource.find_by_rod_id(id_param.to_i)
-        result =
-          if object
-            index = extract_elements(index_param)
-            if Integer === index
-              fetch_one_related(index,object,property)
+        protected
+        # GET /cars
+        # GET /cars?name=Mercedes
+        def define_index(resource,resource_name,serializer)
+          get index_path(resource_name) do
+            case params.size
+            when 0
+              respond_with_count(resource,serializer)
+            when 1
+              index_name, searched_value = params.first
+              respond_with_indexed_resource(resource,index_name,searched_value,serializer)
             else
-              fetch_related_collection(index,object,property)
+              respond_with_nil(serializer)
             end
+          end
+        end
+
+        # GET /cars/1
+        # GET /cars/1..3
+        # GET /cars/1,2,3
+        def define_show(resource,resource_name,serializer)
+          get show_path(resource_name) do
+            respond_with_resource(params[:id],resource,serializer)
+          end
+        end
+
+        # GET /cars/1/drivers
+        def define_association_index(resource,resource_name,property,serializer)
+          get association_index_path(resource_name,property.name) do
+            respond_with_related_count(resource,property.name,params[:id].to_i,serializer)
+          end
+        end
+
+        # GET /cars/1/drivers/0
+        # GET /cars/1/drivers/0..2
+        # GET /cars/1/drivers/0,1,2
+        def define_association_show(resource,resource_name,property,serializer)
+          get association_show_path(resource_name,property.name) do
+            respond_with_related_resource(params[:id].to_i,params[:index],resource,property,serializer)
+          end
+        end
+
+        def index_path(resource_name)
+          "/#{resource_name}"
+        end
+
+        def show_path(resource_name)
+          "/#{resource_name}/:id"
+        end
+
+        def association_index_path(resource_name,property_name)
+          "/#{resource_name}/:id/#{property_name}"
+        end
+
+        def association_show_path(resource_name,property_name)
+          "/#{resource_name}/:id/#{property_name}/:index"
+        end
+      end
+
+      protected
+      def respond_with_resource(id_param,resource,serializer)
+        id_or_range = extract_elements(id_param)
+        result =
+          if Integer === id_or_range
+            fetch_one(id_or_range,resource)
           else
-            report_not_found
+            fetch_collection(id_or_range,resource)
           end
         serializer.serialize(result)
+      end
+
+      def respond_with_related_resource(id,index_param,resource,property,serializer)
+        object = resource.find_by_rod_id(id)
+        if object
+          index_or_range = extract_elements(index_param)
+          result =
+            if Integer === index_or_range
+              fetch_one_related(index_or_range,object,property)
+            else
+              fetch_related_collection(index_or_range,object,property)
+            end
+          serializer.serialize(result)
+        else
+          respond_with_nil(serializer)
+        end
+      end
+
+      def respond_with_count(resource,serializer)
+        serializer.serialize({count: resource.count})
+      end
+
+      def respond_with_related_count(resource,property_name,id,serializer)
+        object = resource.find_by_rod_id(id)
+        if object
+          serializer.serialize({count: object.send("#{property_name}_count") })
+        else
+          respond_with_nil(serializer)
+        end
+      end
+
+      def respond_with_indexed_resource(resource,index_name,searched_value,serializer)
+        if resource.respond_to?("find_all_by_#{index_name}")
+          serializer.serialize(resource.send("find_all_by_#{index_name}",searched_value))
+        else
+          respond_with_nil(serializer)
+        end
       end
 
       def fetch_collection(ids,resource)
@@ -137,6 +187,11 @@ module Rod
       def report_not_found
         status 404
         nil
+      end
+
+      def respond_with_nil(serializer)
+        report_not_found
+        serializer.serialize(nil)
       end
     end
   end

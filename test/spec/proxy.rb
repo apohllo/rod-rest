@@ -78,26 +78,20 @@ module Rod
           mercedes_300.owner.should == owner_object
         end
 
+        it "caches 'owner' singular association" do
+          mercedes_300.owner
+          mercedes_300.owner
+          expect(client).to have_received.fetch_object(schumaher_hash) { schumaher_object }.once
+        end
+
         it "has a valid 'drivers' plural association" do
           mercedes_300.drivers.should == collection_proxy
         end
 
-        context "caching singular associations" do
-          let(:client)  {mock!.fetch_object(schumaher_hash) { schumaher_object }.once.subject }
-
-          it "caches 'owner' singular association" do
-            mercedes_300.owner
-            mercedes_300.owner
-          end
-        end
-
-        context "caching plural associations" do
-          let(:collection_proxy_factory)  { mock!.new(anything,drivers_association_name,drivers_count,client) { collection_proxy }.once.subject }
-
-          it "caches 'drivers' plural association" do
-            mercedes_300.drivers
-            mercedes_300.drivers
-          end
+        it "caches 'drivers' plural association" do
+          mercedes_300.drivers
+          mercedes_300.drivers
+          expect(collection_proxy_factory).to have_received.new(anything,drivers_association_name,drivers_count,client) { collection_proxy }.once
         end
       end
     end

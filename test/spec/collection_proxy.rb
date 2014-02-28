@@ -60,6 +60,12 @@ module Rod
             it "returns nil in case of out of bounds driver" do
               collection[5].should == nil
             end
+
+            it "caches retrieved objects" do
+              collection[1]
+              collection[1]
+              expect(client).to have_received.fetch_related_object(mercedes_proxy,association_name,1) { kubica }.once
+            end
           end
 
           describe "#[lower..upper]" do
@@ -69,6 +75,13 @@ module Rod
 
             it "returns drivers by index range" do
               collection[0..2].should == [schumaher,kubica,alonzo]
+            end
+
+            it "caches retrieved objects" do
+              collection[0..2]
+              collection[1]
+              collection[1]
+              expect(client).to have_received.fetch_related_objects(mercedes_proxy,association_name,0..2).once
             end
           end
 

@@ -16,6 +16,7 @@ module Rod
         @association_name = association_name
         @size = size
         @client = client
+        @cache = []
       end
 
       # Returns true if the collection is empty (i.e. its size == 0).
@@ -27,9 +28,10 @@ module Rod
       def [](index)
         begin
           if Range === index
-            @client.fetch_related_objects(@proxy,@association_name,index)
+            @cache[index] = @client.fetch_related_objects(@proxy,@association_name,index)
           else
-            @client.fetch_related_object(@proxy,@association_name,index)
+            return @cache[index] unless @cache[index].nil?
+            @cache[index] = @client.fetch_related_object(@proxy,@association_name,index)
           end
         rescue MissingResource
           nil

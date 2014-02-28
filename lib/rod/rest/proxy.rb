@@ -38,7 +38,7 @@ module Rod
       private
       def build_class(metadata)
         Class.new do
-          class_variable_set("@@metadata",metadata)
+          instance_variable_set("@metadata",metadata)
 
           attr_reader :type,:rod_id
 
@@ -96,23 +96,31 @@ module Rod
 
           private
           def inspect_fields
-            @@metadata.fields.map do |field|
+            metadata.fields.map do |field|
               "#{field.name}:#{self.send(field.symbolic_name)}"
             end.join(",")
           end
 
           def inspect_singular_associations
-            @@metadata.singular_associations.map do |association|
+            metadata.singular_associations.map do |association|
               description = instance_variable_get("@_#{association.name}_description")
               "#{association.name}:#{description[:type]}:#{description[:rod_id]}"
             end.join(",")
           end
 
           def inspect_plural_associations
-            @@metadata.plural_associations.map do |association|
+            metadata.plural_associations.map do |association|
               count = instance_variable_get("@_#{association.name}_count")
               "#{association.name}[#{count}]"
             end.join(",")
+          end
+
+          def metadata
+            self.class.metadata
+          end
+
+          def self.metadata
+            @metadata
           end
         end
       end

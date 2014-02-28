@@ -35,13 +35,14 @@ module Rod
 
       let(:car_type)            { "Test::Car" }
       let(:mercedes_300_hash)   { { rod_id: mercedes_300_id, name: mercedes_300_name, type: car_type,
-                                    owner: schumaher_hash, drivers: { count: drivers_count } } }
+                                    owner: owner_hash, drivers: { count: drivers_count } } }
       let(:mercedes_300_id)     { 1 }
       let(:mercedes_300_name)   { "Mercedes 300" }
 
       let(:person_type)         { "Test::Person" }
       let(:drivers_count)       { 1 }
       let(:schumaher_hash)      { { rod_id: schumaher_id, type: person_type } }
+      let(:owner_hash)          { schumaher_hash }
       let(:schumaher_id)        { 2 }
       let(:schumaher_object)    { Object.new }
       let(:owner_object)        { schumaher_object }
@@ -117,6 +118,14 @@ module Rod
 
           it "reports the drivers of the car" do
             mercedes_300.inspect.should match(/drivers\[#{drivers_count}\]/)
+          end
+
+          context "with nil owner" do
+            let(:owner_hash) { nil }
+
+            it "reports nil owner" do
+              mercedes_300.inspect.should match(/owner:nil/)
+            end
           end
         end
 

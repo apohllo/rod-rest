@@ -104,7 +104,11 @@ module Rod
           def inspect_singular_associations
             metadata.singular_associations.map do |association|
               description = instance_variable_get("@_#{association.name}_description")
-              "#{association.name}:#{description[:type]}:#{description[:rod_id]}"
+              if description
+                "#{association.name}:#{description[:type]}:#{description[:rod_id]}"
+              else
+                "#{association.name}:nil"
+              end
             end.join(",")
           end
 

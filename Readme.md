@@ -44,6 +44,9 @@ end
 The client provides the following calls:
 
 ```ruby
+# return people count
+client.people_count()
+
 # find person by ROD id
 client.find_person(1)
 
@@ -57,6 +60,9 @@ client.find_people_by_name("Albert")
 
 # find people by surname
 client.find_people_by_surname("Einstein")
+
+# return cars count
+client.cars_count()
 
 # find cars by brand
 car = client.find_cars_by_brand("Mercedes").first

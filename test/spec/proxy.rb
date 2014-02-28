@@ -35,7 +35,7 @@ module Rod
 
       let(:car_type)            { "Test::Car" }
       let(:mercedes_300_hash)   { { rod_id: mercedes_300_id, name: mercedes_300_name, type: car_type,
-                                    owner: { rod_id: schumaher_id, type: person_type}, drivers: { count: drivers_count } } }
+                                    owner: schumaher_hash, drivers: { count: drivers_count } } }
       let(:mercedes_300_id)     { 1 }
       let(:mercedes_300_name)   { "Mercedes 300" }
 
@@ -74,12 +74,30 @@ module Rod
           mercedes_300.name.should == mercedes_300_name
         end
 
-        it "has an valid 'owner' singular association" do
+        it "has a valid 'owner' singular association" do
           mercedes_300.owner.should == owner_object
         end
 
         it "has a valid 'drivers' plural association" do
           mercedes_300.drivers.should == collection_proxy
+        end
+
+        context "caching singular associations" do
+          let(:client)  {mock!.fetch_object(schumaher_hash) { schumaher_object }.once.subject }
+
+          it "caches 'owner' singular association" do
+            mercedes_300.owner
+            mercedes_300.owner
+          end
+        end
+
+        context "caching plural associations" do
+          let(:collection_proxy_factory)  { mock!.new(anything,drivers_association_name,drivers_count,client) { collection_proxy }.once.subject }
+
+          it "caches 'drivers' plural association" do
+            mercedes_300.drivers
+            mercedes_300.drivers
+          end
         end
       end
     end

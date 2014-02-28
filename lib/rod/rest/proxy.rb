@@ -65,7 +65,10 @@ module Rod
           metadata.plural_associations.each do |association|
             class_eval <<-END
               def #{association.name}
-                @collection_proxy_factory.new(self,"#{association.name}",@_#{association.name}_count,@client)
+                if defined?(@#{association.name})
+                  return @#{association.name}
+                end
+                @#{association.name} = @collection_proxy_factory.new(self,"#{association.name}",@_#{association.name}_count,@client)
               end
             END
           end

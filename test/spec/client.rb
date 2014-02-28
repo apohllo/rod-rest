@@ -82,7 +82,10 @@ module Rod
           let(:mercedes_300_hash) { {rod_id: mercedes_300_id, type: car_type } }
           let(:mercedes_180_hash) { {rod_id: mercedes_180_id, type: car_type } }
           let(:audi_a4_hash)      { {rod_id: audi_a4_id, type: car_type } }
-          let(:mercedes_300)      { Object.new }
+          let(:mercedes_300)      { mercedes = stub!.rod_id { mercedes_300_id }.subject
+                                    stub(mercedes).type { car_type }
+                                    mercedes
+          }
           let(:mercedes_180)      { Object.new }
           let(:audi_a4)           { Object.new }
           let(:factory)           { factory = stub!.build(mercedes_300_hash) { mercedes_300 }.subject
@@ -283,11 +286,6 @@ module Rod
                                                 proxy
                 }
 
-                before do
-                  stub(mercedes_300).rod_id { mercedes_300_id }
-                  stub(mercedes_300).type { car_type }
-                end
-
                 it "returns the driver" do
                   client.fetch_related_object(mercedes_300,association_name,schumaher_index).should == schumaher
                 end
@@ -306,6 +304,36 @@ module Rod
 
                 it "raises APIError exception for invalid association name" do
                   lambda { client.fetch_related_object(mercedes_300,invalid_association_name,schumaher_index)}.should raise_exception(APIError)
+                end
+              end
+
+              describe "#fetch_related_objects(subject,relation,0..2)" do
+                let(:association_name)        { "drivers" }
+                let(:drivers)                 { [schumaher,kubica,alonzo] }
+                let(:collection_json)         { [schumaher_hash,kubica_hash,alonzo_hash].to_json }
+
+                before do
+                  stub(web_client).get("/cars/#{mercedes_300_id}/#{association_name}/#{schumaher_index}..#{alonzo_index}") { response }
+                  stub(response).body { collection_json }
+                end
+
+                it "returns drivers collection" do
+                  client.fetch_related_objects(mercedes_300,association_name,schumaher_index..alonzo_index).should == drivers
+                end
+              end
+
+              describe "#fetch_related_objects(subject,relation,0,2)" do
+                let(:association_name)        { "drivers" }
+                let(:drivers)                 { [schumaher,alonzo] }
+                let(:collection_json)         { [schumaher_hash,alonzo_hash].to_json }
+
+                before do
+                  stub(web_client).get("/cars/#{mercedes_300_id}/#{association_name}/#{schumaher_index},#{alonzo_index}") { response }
+                  stub(response).body { collection_json }
+                end
+
+                it "returns drivers collection" do
+                  client.fetch_related_objects(mercedes_300,association_name,schumaher_index,alonzo_index).should == drivers
                 end
               end
             end

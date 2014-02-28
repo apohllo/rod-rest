@@ -26,22 +26,31 @@ module Rod
       # Returns the index-th element of the collection.
       def [](index)
         begin
-          @client.fetch_related_object(@proxy,@association_name,index)
+          if Range === index
+            @client.fetch_related_objects(@proxy,@association_name,index)
+          else
+            @client.fetch_related_object(@proxy,@association_name,index)
+          end
         rescue MissingResource
           nil
         end
       end
 
+      # Returns the first element of the collection.
+      def first
+        self.size > 0 ? self[0] : nil
+      end
+
       # Returns the last element of the collection.
       def last
-        size > 0 ? self[size - 1] : nil
+        self.size > 0 ? self[size - 1] : nil
       end
 
       # Iterates over the elements of the collection.
       def each
         if block_given?
-          @size.times do |index|
-            yield self[index]
+          self[0..@size-1].each do |object|
+            yield object
           end
         else
           enum_for(:each)

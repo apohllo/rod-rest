@@ -57,6 +57,15 @@ module Rod
         __send__(association_method_name(subject.type,association_name),subject.rod_id,index)
       end
 
+      # Fetch objects related via the association to the +subject+.
+      # The association name is +association_name+ and the objects are the
+      # objects indicated by the idices. This might be a range or a comma
+      # separated list of indices.
+      def fetch_related_objects(subject,association_name,*indices)
+        check_subject_and_association(subject,association_name)
+        __send__(plural_association_method_name(subject.type,association_name),subject.rod_id,*indices)
+      end
+
       # Overrided in order to fetch the metadata when it was not provided in the
       # constructor.
       def method_missing(*args)

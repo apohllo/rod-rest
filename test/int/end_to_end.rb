@@ -99,38 +99,44 @@ module Rod
           end
         end
 
-        example "Schumaher might be retrieved by id" do
-          schumaher_in_rod = Person.find_by_name(SCHUMAHER_NAME)
-          schumaher_via_api = client.find_person(schumaher_in_rod.rod_id)
-          verify_person_equality(schumaher_via_api,schumaher_in_rod)
-        end
+        describe "with cars and drivers loaded from Rod" do
+          let(:schumaher_in_rod)  { Person.find_by_name(SCHUMAHER_NAME) }
+          let(:kubica_in_rod)     { Person.find_by_name(KUBICA_NAME) }
+          let(:mercedes_in_rod)   { Car.find_by_brand(MERCEDES_300_NAME) }
 
-        example "Kubica might be retrieved by name" do
-          kubica_in_rod = Person.find_by_name(KUBICA_NAME)
-          kubica_via_api = client.find_people_by_name(KUBICA_NAME).first
-          verify_person_equality(kubica_via_api,kubica_in_rod)
-        end
+          example "Schumaher might be retrieved by id" do
+            schumaher_via_api = client.find_person(schumaher_in_rod.rod_id)
+            verify_person_equality(schumaher_via_api,schumaher_in_rod)
+          end
 
-        example "Mercedes might be retrieved by id" do
-          mercedes_in_rod = Car.find_by_brand(MERCEDES_300_NAME)
-          mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
-          mercedes_via_api.brand.should == mercedes_in_rod.brand
-        end
+          example "Kubica might be retrieved by name" do
+            kubica_via_api = client.find_people_by_name(KUBICA_NAME).first
+            verify_person_equality(kubica_via_api,kubica_in_rod)
+          end
 
-        example "Mercedes owner is retrieved properly" do
-          mercedes_in_rod = Car.find_by_brand(MERCEDES_300_NAME)
-          schumaher_in_rod = Person.find_by_name(SCHUMAHER_NAME)
-          mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
-          verify_person_equality(mercedes_via_api.owner,schumaher_in_rod)
-        end
+          example "Mercedes might be retrieved by id" do
+            mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
+            mercedes_via_api.brand.should == mercedes_in_rod.brand
+          end
 
-        example "Mercedes drivers are retrieved properly" do
-          mercedes_in_rod = Car.find_by_brand(MERCEDES_300_NAME)
-          schumaher_in_rod = Person.find_by_name(SCHUMAHER_NAME)
-          kubica_in_rod = Person.find_by_name(KUBICA_NAME)
-          mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
-          verify_person_equality(mercedes_via_api.drivers[0],schumaher_in_rod)
-          verify_person_equality(mercedes_via_api.drivers[1],kubica_in_rod)
+          example "Mercedes owner is retrieved properly" do
+            mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
+            verify_person_equality(mercedes_via_api.owner,schumaher_in_rod)
+          end
+
+          example "Mercedes drivers are retrieved properly" do
+            mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
+            verify_person_equality(mercedes_via_api.drivers[0],schumaher_in_rod)
+            verify_person_equality(mercedes_via_api.drivers[1],kubica_in_rod)
+          end
+
+          example "Mercedes drivers might be iterated over" do
+            mercedes_via_api = client.find_car(mercedes_in_rod.rod_id)
+            expected_drivers = [schumaher_in_rod,kubica_in_rod]
+            mercedes_via_api.drivers.zip(expected_drivers).each do |driver,expected_driver|
+              verify_person_equality(driver,expected_driver)
+            end
+          end
         end
       end
     end

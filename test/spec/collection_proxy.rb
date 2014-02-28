@@ -62,6 +62,16 @@ module Rod
             end
           end
 
+          describe "#[lower..upper]" do
+            before do
+              stub(client).fetch_related_objects(mercedes_proxy,association_name,0..2) { [schumaher,kubica,alonzo] }
+            end
+
+            it "returns drivers by index range" do
+              collection[0..2].should == [schumaher,kubica,alonzo]
+            end
+          end
+
           describe "#first" do
             before do
               stub(client).fetch_related_object(mercedes_proxy,association_name,0) { schumaher }
@@ -84,9 +94,7 @@ module Rod
 
           describe "#each" do
             before do
-              stub(client).fetch_related_object(mercedes_proxy,association_name,0) { schumaher }
-              stub(client).fetch_related_object(mercedes_proxy,association_name,1) { kubica }
-              stub(client).fetch_related_object(mercedes_proxy,association_name,2) { alonzo }
+              stub(client).fetch_related_objects(mercedes_proxy,association_name,0..2) { [schumaher,kubica,alonzo] }
             end
 
             it "iterates over the drivers" do

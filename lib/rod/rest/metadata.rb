@@ -22,6 +22,16 @@ module Rod
         @resources
       end
 
+      # Returns the description of the metadata and the class name.
+      def inspect
+        "#{self.class}<#{@description.inspect}>"
+      end
+
+      # Returns the description of the metadata.
+      def to_s
+        @description.to_s
+      end
+
       private
       def create_resource_descriptions(hash_description)
         hash_description.map do |name,description|

@@ -15,6 +15,18 @@ module Rod
       def indexed?
         !! @index
       end
+
+      # Detailed description of the porperty, i.e.
+      # Rod::Rest::PropertyMetadata<name>
+      def inspect
+        indexed = indexed? ? ",indexed" : ""
+        "#{self.class}<#{@name}#{indexed}>"
+      end
+
+      # Short description of the poperty.
+      def to_s
+        "'#{@name}' property"
+      end
     end
   end
 end

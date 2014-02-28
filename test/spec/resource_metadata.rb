@@ -90,6 +90,18 @@ module Rod
         it "allows to iterate over the indexed properties" do
           resource_metadata.indexed_properties.should respond_to(:each)
         end
+
+        describe "#inspect" do
+          it "reports the description of the metadata" do
+            resource_metadata.inspect.should == description.inspect
+          end
+        end
+
+        describe "#to_s" do
+          it "reports the description of the metadata" do
+            resource_metadata.to_s.should == description.to_s
+          end
+        end
       end
     end
   end

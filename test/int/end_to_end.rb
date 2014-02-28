@@ -82,8 +82,9 @@ module Rod
           sleep 0.5
         end
 
-        after(:all) do
-          #Thread.join
+        example "Client#inspect reports host and port" do
+          client.inspect.should match(/4567/)
+          client.inspect.should match(/localhost/)
         end
 
         example "API serves the metadata" do

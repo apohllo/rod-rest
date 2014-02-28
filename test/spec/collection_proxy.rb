@@ -11,6 +11,34 @@ module Rod
       let(:size)              { 0 }
       let(:client)            { Object.new }
 
+      describe "#inspect" do
+        let(:car_type)        { "Car" }
+        before do
+          stub(mercedes_proxy).type { car_type }
+        end
+
+        it "reports the type of the proxy object" do
+          collection.inspect.should match(/#{car_type}/)
+        end
+
+        it "reports the name of the association" do
+          collection.inspect.should match(/#{association_name}/)
+        end
+
+        it "reports size of the collection" do
+          collection.inspect.should match(/#{size}/)
+        end
+      end
+
+      describe "#to_s" do
+        it "reports the size of the collection" do
+          collection.to_s.should match(/#{size}/)
+        end
+      end
+
+      describe "#to_s" do
+      end
+
       describe "#empty?" do
         describe "with 0 elements" do
           it "is empty" do

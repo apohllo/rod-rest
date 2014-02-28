@@ -93,6 +93,42 @@ module Rod
           mercedes_300.drivers
           expect(collection_proxy_factory).to have_received.new(anything,drivers_association_name,drivers_count,client) { collection_proxy }.once
         end
+
+        describe "#inspect" do
+          it "reports that it is a proxy" do
+            mercedes_300.inspect.should match(/Proxy/)
+          end
+
+          it "reports the type of the object" do
+            mercedes_300.inspect.should match(/#{car_type}/)
+          end
+
+          it "reports the id of the object" do
+            mercedes_300.inspect.should match(/#{mercedes_300_id}/)
+          end
+
+          it "reports the name of the car" do
+            mercedes_300.inspect.should match(/name:#{mercedes_300_name}/)
+          end
+
+          it "reports the owner of the car" do
+            mercedes_300.inspect.should match(/owner:#{person_type}:#{schumaher_id}/)
+          end
+
+          it "reports the drivers of the car" do
+            mercedes_300.inspect.should match(/drivers\[#{drivers_count}\]/)
+          end
+        end
+
+        describe "#to_s" do
+          it "reports the type of the object" do
+            mercedes_300.to_s.should match(/#{car_type}/)
+          end
+
+          it "reports the id of the object" do
+            mercedes_300.to_s.should match(/#{mercedes_300_id}/)
+          end
+        end
       end
     end
   end

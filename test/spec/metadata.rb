@@ -32,6 +32,30 @@ module Rod
         metadata.resources.first
         expect(resource_metadata_factory).to have_received.new(resource_name,resource_description)
       end
+
+      describe "#inspect" do
+        let(:data_description)  { "data description" }
+
+        before do
+          stub(description).inspect { data_description }
+        end
+
+        it "returns the description of the data" do
+          metadata.inspect.should match(/#{data_description}/)
+        end
+      end
+
+      describe "#to_s" do
+        let(:data_description)  { "data description" }
+
+        before do
+          stub(description).to_s { data_description }
+        end
+
+        it "returns the description of the data" do
+          metadata.to_s.should match(/#{data_description}/)
+        end
+      end
     end
   end
 end

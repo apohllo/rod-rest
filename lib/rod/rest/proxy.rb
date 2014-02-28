@@ -38,13 +38,34 @@ module Rod
       private
       def build_class(metadata)
         Class.new do
+          class_variable_set("@@metadata",metadata)
+
           attr_reader :type,:rod_id
 
+          # Initialize the object with its +rod_it+, +type+ and the +client+
+          # used to fetch the referenced objects. Use +collection_proxy_factory+
+          # to create the referenced objects.
           def initialize(rod_id,type,client,collection_proxy_factory)
             @rod_id = rod_id
             @type = type
             @client = client
             @collection_proxy_factory = collection_proxy_factory
+          end
+
+          # Detailed description of the object, e.g.
+          # Proxy[Car]<rod_id:1,brand:Mercedes><owner:Person:1><drivers[3]>
+          def inspect
+            result = "Proxy[#{@type}]"
+            result << "<#{inspect_fields}>"
+            result << "<#{inspect_singular_associations}>"
+            result << "<#{inspect_plural_associations}>"
+            result
+          end
+
+          # Only reports the type of the proxy and its rod_id, e.g.
+          # Car[1]
+          def to_s
+            "#{@type}[#{@rod_id}]"
           end
 
           metadata.fields.each do |field|
@@ -71,6 +92,27 @@ module Rod
                 @#{association.name} = @collection_proxy_factory.new(self,"#{association.name}",@_#{association.name}_count,@client)
               end
             END
+          end
+
+          private
+          def inspect_fields
+            @@metadata.fields.map do |field|
+              "#{field.name}:#{self.send(field.symbolic_name)}"
+            end.join(",")
+          end
+
+          def inspect_singular_associations
+            @@metadata.singular_associations.map do |association|
+              description = instance_variable_get("@_#{association.name}_description")
+              "#{association.name}:#{description[:type]}:#{description[:rod_id]}"
+            end.join(",")
+          end
+
+          def inspect_plural_associations
+            @@metadata.plural_associations.map do |association|
+              count = instance_variable_get("@_#{association.name}_count")
+              "#{association.name}[#{count}]"
+            end.join(",")
           end
         end
       end

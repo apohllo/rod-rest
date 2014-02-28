@@ -84,6 +84,16 @@ module Rod
         self.send(*args)
       end
 
+      # Detailed description of the client.
+      def inspect
+        "Rod::Rest::Client<port: #{@web_client.port}, host: #{@web_client.host}>"
+      end
+
+      # Short description of the client.
+      def to_s
+        "ROD REST API client"
+      end
+
       private
       def fetch_metadata
         response = @web_client.get(metadata_path())

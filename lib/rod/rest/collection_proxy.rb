@@ -6,7 +6,7 @@ module Rod
       include Enumerable
       attr_reader :size
 
-      # Initializes a CollectionPorxy.
+      # Initializes a CollectionProxy.
       # * +:proxy+ - the object this collection belongs to
       # * +:association_name+ - the name of proxie's plural association this collection is returned for
       # * +:size+ - the size of the collection
@@ -17,6 +17,17 @@ module Rod
         @size = size
         @client = client
         @cache = []
+      end
+
+      # Detailed description of the object, i.e.
+      # Rod::Rest::CollectionProxy<Car#drivers[5]>
+      def inspect
+        "#{self.class.name}<#{@proxy.type}\##{@association_name}[#{@size}]>"
+      end
+
+      # Short description of the collection, i.e. [5-elements].
+      def to_s
+        "[#{@size}-elements]"
       end
 
       # Returns true if the collection is empty (i.e. its size == 0).

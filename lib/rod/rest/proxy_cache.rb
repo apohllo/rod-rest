@@ -5,25 +5,22 @@ module Rod
     # Cache used to store proxy objects.
     class ProxyCache
       # Initializes empty cache.
-      def initialize()
-        @cache_implementation = {}
+      def initialize(cache_implementation={})
+        @cache_implementation = cache_implementation
       end
 
       # Returns true if the described object is in the cache.
       def has_key?(description)
         check_description(description)
-        @cache_implementation.has_key?(description_signature(description))
+        @cache_implementation[description_signature(description)]
       end
 
       # Returns the object stored in the cache. Raises CacheMissed exception if
       # the result is nil.
       def [](description)
         check_description(description)
-        begin
-          @cache_implementation.fetch(description_signature(description))
-        rescue KeyError
-          raise CacheMissed.new(missing_entry_message(description))
-        end
+        value = @cache_implementation[description_signature(description)]
+        raise CacheMissed.new(missing_entry_message(description)) if value.nil?
       end
 
       # Store the +object+ in the cache.

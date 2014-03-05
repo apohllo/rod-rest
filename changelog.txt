@@ -1,3 +1,5 @@
+0.5.2
+Simplify ProxyCache implementation API
 0.5.1
 Fix CollectionProxy#each for empty collection
 Fix inspection of proxy
